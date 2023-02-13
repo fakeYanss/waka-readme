@@ -312,7 +312,7 @@ def prep_content(stats: dict[str, Any], language_count: int = 5, /) -> str:
             f'{lang_time: <16}{lang_bar}   ' +
             f'{lang_ratio:.2f}'.zfill(5) + ' %\n'
         )
-        if idx >= language_count or lang_name == 'Other':
+        if idx >= language_count:
             break
 
     logger.debug('Contents were made\n')
@@ -406,16 +406,26 @@ def genesis() -> None:
     gh_connect = Github(wk_i.gh_token)
     # since a validator is being used casting to string here is okay
     gh_repo = gh_connect.get_repo(str(wk_i.repository))
-    readme_file = gh_repo.get_readme()
+
+    # readme_file = gh_repo.get_readme()
+    # logger.debug('Decoding readme contents\n')
+    # readme_contents = str(readme_file.decoded_content, encoding='utf-8')
+
+    readme_tpl_path = "templates/README.md.tpl"
+    readme_tpl = gh_repo.get_contents(readme_tpl_path)
     logger.debug('Decoding readme contents\n')
-    readme_contents = str(readme_file.decoded_content, encoding='utf-8')
-    if new_content := churn(readme_contents):
+    readme_tpl_contents = str(readme_tpl.decoded_content, encoding='utf-8')
+
+    # if new_content := churn(readme_contents):
+    if new_content := churn(readme_tpl_contents):
         logger.debug('WakaReadme stats has changed')
         gh_repo.update_file(
-            path=readme_file.path,
+            # path=readme_file.path,
+            path=readme_tpl_path,
             message=wk_i.commit_message,
             content=new_content,
-            sha=readme_file.sha
+            # sha=readme_file.sha
+            sha=readme_tpl.sha
         )
         logger.info('Stats updated successfully')
         return
